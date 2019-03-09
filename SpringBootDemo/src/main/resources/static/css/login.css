@@ -1,0 +1,215 @@
+﻿@charset "utf-8";
+
+* {
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+    font-family: 'Microsoft YaHei';
+    color: #333;
+    list-style: none;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    text-decoration: none;
+    outline: none;
+}
+
+img {
+    border: 0;
+}
+
+.fl {
+    float: left;
+}
+
+.fr {
+    float: right;
+}
+
+.mt1 {
+    margin-top: 10px;
+}
+
+.ml1 {
+    margin-left: 10px;
+}
+
+.mb1 {
+    margin-bottom: 10px;
+}
+
+.mr1 {
+    margin-right: 10px;
+}
+
+.cb::after {
+    display: block;
+    content: '';
+    clear: both;
+    zoom: 1;
+}
+
+input[type=text] {
+    padding: 0 4px;
+}
+input[type=password] {
+    padding: 0 4px;
+}
+
+    /*input[type=text]:focus {
+        border: 1px solid #999;
+        -webkit-transition: all 0.3s ease-in-out 0s;
+        -moz-transition: all 0.3s ease-in-out 0s;
+        -o-transition: all 0.3s ease-in-out 0s;
+        transition: all 0.3s ease-in-out 0s;
+    }*/
+
+    input[type=text] ::-webkit-input-placeholder {
+        color: #ccc;
+    }
+
+    input[type=text] ::-moz-placeholder {
+        color: #ccc;
+    }
+
+    input[type=text] :-moz-placeholder {
+        color: #ccc;
+    }
+
+    input[type=text] :-ms-input-placeholder {
+        color: #ccc;
+    }
+
+input[type=button] {
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+select {
+    cursor: pointer;
+}
+button{
+    cursor: pointer;
+}
+/*if you need it,let it out.
+        select:focus {
+        border: 1px solid #3470e9;
+        -webkit-transition: all 0.3s ease-in-out 0s;
+        -moz-transition: all 0.3s ease-in-out 0s;
+        -o-transition: all 0.3s ease-in-out 0s;
+        transition: all 0.3s ease-in-out 0s;
+    }*/
+
+
+table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.cantchoose {
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.document {
+    width: 1000px;
+    margin: 0 auto;
+}
+
+    .document:after {
+        display: block;
+        content: '';
+        clear: both;
+        zoom: 1;
+    }
+
+ul:after {
+    display: block;
+    content: '';
+    clear: both;
+    zoom: 1;
+}
+/*===========The=whole=public=style===========*/
+.wrapbox {
+    width: 100%;
+    background-image: url('../images/ytbg.jpg');
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    background-size: 100%;
+}
+
+.loginform1 {
+    width: 470px;
+    height: 280px;
+    background-color: rgba(255,255,255,.7);
+    background-color:#fff\9;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-left: -235px;
+    margin-top: -180px;
+}
+
+    .loginform1 .loginfo {
+        width: 100%;
+        height: 66px;
+        position: relative;
+    }
+
+        .loginform1 .loginfo .logo {
+            width: 90px;
+            position: absolute;
+            top: -50px;
+            left: 14px;
+            z-index: 99;
+        }
+
+        .loginform1 .loginfo p {
+            margin-left: 110px;
+            font-size: 20px;
+            font-family: '黑体';
+            line-height: 60px;
+            font-weight: 600;
+        }
+
+.formul li {
+    height:40px;
+    text-align: center;
+    margin-bottom: 20px;
+    position:relative;
+}
+
+    .formul li input {
+        width: 260px;
+        height: 40px;
+        line-height: 40px;
+        border: 1px solid #999;
+        -moz-border-radius: 6px;
+        -webkit-border-radius: 6px;
+        border-radius: 6px;
+        margin-left: 12px;
+        background-color: rgba(255,255,255,.6);
+    }
+    .formul li button {
+        width: 260px;
+        height: 40px;
+        line-height: 40px;
+        border: 0;
+        -moz-border-radius: 6px;
+        -webkit-border-radius: 6px;
+        border-radius: 6px;
+        background-color: #0d4d95;
+        color:#fff;
+        margin-left:57px;
+        margin-top:10px;
+    }
+.erroremind {
+    border:1px solid #ff0000!important;
+}

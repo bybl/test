@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.huadong.mapper.SysRoleResourceMapper">
+    <resultMap id="BaseResultMap" type="net.huadong.entity.SysRoleResource">
+        <!--
+          WARNING - @mbg.generated
+        -->
+        <id column="ID" jdbcType="VARCHAR" property="id"/>
+        <result column="ROLE_ID" jdbcType="VARCHAR" property="roleId"/>
+        <result column="RESOURCE_ID" jdbcType="VARCHAR" property="resourceId"/>
+    </resultMap>
+    <!--获取用户拥有的权限-->
+    <select id="getUserPermissionByUserId" resultType="java.lang.String">
+        select distinct PERMISSION_CODE
+        from SYS_RESOURCE t1,
+             SYS_ROLE_RESOURCE t2,
+             SYS_USER_ROLE t3
+        where t1.RESOURCE_ID = t2.RESOURCE_ID  and t1.resource_type='PERMISSION'
+          and t2.ROLE_ID = t3.ROLE_ID
+          and t3.user_id = #{userId}
+    </select>
+</mapper>

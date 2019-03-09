@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.huadong.mapper.SysUserMapper">
+  <resultMap id="BaseResultMap" type="net.huadong.entity.SysUser">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="USER_NAME" jdbcType="VARCHAR" property="userName" />
+    <result column="USER_ID" jdbcType="VARCHAR" property="userId" />
+    <result column="PASSWORD" jdbcType="VARCHAR" property="password" />
+    <result column="NICK_NAME" jdbcType="VARCHAR" property="nickName" />
+    <result column="PHONE" jdbcType="VARCHAR" property="phone" />
+    <result column="EMAIL" jdbcType="VARCHAR" property="email" />
+    <result column="LAST_LOGIN_TIME" jdbcType="TIMESTAMP" property="lastLoginTime" />
+    <result column="IS_ENABLE" jdbcType="CHAR" property="isEnable" />
+    <result column="CREATE_USER" jdbcType="VARCHAR" property="createUser" />
+    <result column="CREATE_TIME" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="UPDATE_USER" jdbcType="VARCHAR" property="updateUser" />
+    <result column="UPDATE_TIME" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <select id="selectAllUser" resultMap="BaseResultMap">
+    SELECT
+    u.nick_name ,
+    u.user_id
+    from sys_user u
+    where not exists (select 1
+    from sys_user_role ru
+    where ru.user_id = u.user_id
+    and ru.role_id = #{roleId})
+    and user_name is not null
+    <if test="userName!=null and userName !=''">
+      and u.user_name like concat('%',concat(#{userName},'%'))
+    </if>
+  </select>
+
+  <!--根据角色id查询用户，显示在右边框-->
+  <select id="selectUserByRoleId" resultMap="BaseResultMap">
+        SELECT
+        usera.nick_name,
+        usera.user_id
+        FROM sys_user usera
+        LEFT JOIN sys_user_role role
+        ON role.user_id = usera.user_id
+        WHERE role_id = #{roleId}
+    </select>
+
+  <select id="selectSysUserRecord" resultMap="BaseResultMap">
+
+    select * from sys_user where 1=1
+
+    <if test="nickName!=null and nickName!=''">
+      and sys_user.nick_name like concat('%',concat(#{nickName},'%'))
+    </if>
+    <if test="sort!=null and sort!=''">
+      order by sys_user.${sort} ${order}
+    </if>
+  </select>
+
+
+  <insert id="insertUser" parameterType="net.huadong.entity.SysUser">
+           insert into sys_user(user_id, user_name, password)
+               values(#{userId}, #{userName}, #{password})
+   </insert>
+
+</mapper>

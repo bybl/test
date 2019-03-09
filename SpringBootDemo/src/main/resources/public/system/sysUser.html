@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <meta charset="UTF-8">
+    <title>用户管理</title>
+    <meta charset="UTF-8">
+    <link href="/js/jquery-easyui-1.5.1/themes/default/easyui.css" rel="stylesheet" type="text/css"/>
+    <link href="/js/jquery-easyui-1.5.1/themes/icon.css?t=<%=new Date()%>" rel="stylesheet" type="text/css">
+    <link href="/js/jquery-easyui-1.5.1/themes/icon-standard.css?t=1" rel="stylesheet" type="text/css">
+    <link href="/css/dialog-form.css" rel="stylesheet" type="text/css">
+
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery-easyui-1.5.1/jquery.easyui.min.js"></script>
+    <script src="/js/jquery-easyui-1.5.1/locale/easyui-lang-zh_CN.js"></script>
+    <script src="/js/HdUtil.js"></script>
+    <script src="/js/jquery.md5.js"></script>
+    <script src="/js/easyuiValidate.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            //用户维护
+            $("#sysUserTable").datagrid({
+                url:'/SysUser/getSysUserRecord',
+                method: "get",
+                fit: true,
+                striped: true,
+                rownumbers: true,
+                pagination: true,
+                singleSelect: true,
+                // sortName: "nickName",
+                // sortOrder: 'desc',
+                fitColumns:true,
+                pageSize: HdUtil.constant.PAGE_SIZE,
+                toolbar: '#sysUserToolBar',
+                columns:[
+                    [{
+                        width: '100',
+                        title: '用户账号',
+                        align: 'center',
+                        field: 'userId',
+                        hidden: true
+                    }, {
+                        width: '100',
+                        title: '真实姓名',
+                        align: 'center',
+                        field: 'nickName',
+
+                    },{
+                        width: '120',
+                        title: '用户名称',
+                        align: 'center',
+                        field: 'userName'
+                    }, {
+                        width: '100',
+                        title: '手机号码',
+                        align: 'center',
+                        field: 'phone'
+                    }, {
+                        width: '150',
+                        title: '邮箱',
+                        align: 'center',
+                        field: 'email'
+                    }, {
+                        width: '60',
+                        title: '状态',
+                        sortable: true,
+                        align: 'center',
+                        field: 'isEnable',
+                        formatter: function (value, row, index) {
+                            if (value == '0') {
+                                return '<div style="margin:0 auto;height:20px;width:40px;font-size:12px;background-color:#5cb85c;color:#fff;border-radius:4px;text-align:center;">正常</div>';
+                            } else {
+                                return '<div style="margin:0 auto;height:20px;width:40px;font-size:12px;background-color:#f0ad4e;color:#fff;border-radius:4px;text-align:center;">禁用</div>';
+                            }
+                        }
+                    }, {
+                        width: '100',
+                        title: '创建人',
+                        align: 'center',
+                        field: 'createUser'
+                    }, {
+                        width: '150',
+                        title: '创建时间',
+                        sortable: true,
+                        align: 'center',
+                        field: 'createTime',
+                        formatter: function (value) {
+                            return new Date(value).format("yyyy-MM-dd hh:mm:ss");
+                        },
+                    }, {
+                        width: '100',
+                        title: '修改人',
+                        align: 'center',
+                        field: 'updateUser'
+                    }, {
+                        width: '150',
+                        title: '修改时间',
+                        sortable: true,
+                        align: 'updateTime',
+                        formatter: function (value) {
+                            if (value != null) {
+                                return new Date(value).format("yyyy-MM-dd hh:mm:ss");
+                            }
+                        },
+                        field: 'updateTime'
+                    },  {
+                        width: '150',
+                        title: '上次登录时间',
+                        sortable: true,
+                        align: 'center',
+                        formatter: function (value) {
+                            if (value != null) {
+                                return new Date(value).format("yyyy-MM-dd hh:mm:ss");
+                            }
+                        },
+                        field: 'lastLoginTime'
+                    }, {
+                        width: '70',
+                        title: '操作',
+                        formatter: function (value, row, index) {
+                            return '<a href="#" class="pwdBtn" onclick="javascript:updatePassword(' + index + ');return false;">密码</a>';
+                        },
+                        align: 'center',
+                        field: '_operateColumn'
+                    }
+                    ]
+                ],
+                onLoadSuccess: function () {
+                    $('.pwdBtn').linkbutton({
+                        iconCls: 'icon-standard-server-edit',
+                        plain: true
+                    }).mousemove(function () {
+                        $(this).find(".l-btn-text").css({"text-decoration": "underline", "color": "red"});
+                    }).mouseout(function () {
+                        $(this).find(".l-btn-text").css({"text-decoration": "none", "color": "#000"});
+                    });
+                    $('.disBtn').linkbutton({
+                        iconCls: 'icon-standard-server-delete',
+                        plain: true
+                    }).mousemove(function () {
+                        $(this).find(".l-btn-text").css({"text-decoration": "underline", "color": "red"});
+                    }).mouseout(function () {
+                        $(this).find(".l-btn-text").css({"text-decoration": "none", "color": "#000"});
+                    });
+                    $(".datagrid-btable").find("a").css({"height": "22px"});
+                }
+
+            });
+        });
+
+        //查询
+        function sysUserQuery() {
+            $("#sysUserTable").datagrid("load", {
+                nickName: $("#nickName").textbox("getValue")
+            });
+        }
+        //添加
+        function sysUserAdd() {
+
+            $("#sysUserRecordForm").form("clear");
+            $("#sysUserDialog").dialog("open");
+        }
+
+        //保存用户表单
+        function sysUserRecordSave() {
+            if (!$("#sysUserRecordForm").form("validate")) {
+                return false;
+            }
+            $.messager.progress();
+            $("#sysUserRecordForm").form("submit", {
+                method: "post",
+                url: "/SysUser/saveSysUserRecord",
+                success: function (data) {
+                    $.messager.progress('close');
+                    if (data == "success") {
+                        $("#sysUserDialog").dialog("close");
+                        HdUtil.messager.slide("保存成功");
+                        $("#sysUserTable").datagrid("reload");
+                    } else {
+                        HdUtil.messager.error(data);
+                    }
+                }, error: function (data) {
+                    $.messager.progress('close');
+                    HdUtil.messager.error(data);
+                }
+            });
+        }
+
+        //修改设备检查记录页面调转
+        function sysUserEdit() {
+            var row = $("#sysUserTable").datagrid("getSelected");
+            $("#grantRecordForm").form("clear");
+            if (row) {
+                $("#sysUserRecordForm").form("load", row);
+                $("#sysUserDialog").dialog("open").window('center');
+            } else {
+                HdUtil.messager.error("请选择要修改的记录");
+            }
+        }
+        // 弹出密码修改框
+        function updatePassword(index) {
+            var row = $("#sysUserTable").datagrid('getData').rows[index];
+            if (row) {
+                $("#passwordForm").form("clear").form("load", row);
+                $("#passowrdDialog").dialog("open").window("center");
+            }
+        }
+
+
+
+        //修改密码
+        function savePassword() {
+            $("#passwordForm").find(":input[name='passwordInput']").val();
+            if (!$("#passwordForm").form("validate")) {
+                return false;
+            }
+            $.messager.progress();
+            $("#passwordForm").form("submit", {
+                url: "/SysUser/updatePassword",
+                success: function (data) {
+                    $.messager.progress('close');
+                    if (data == "success") {
+                        $("#passowrdDialog").dialog("close");
+                        HdUtil.messager.slide("请点击退出按钮，重新登陆");
+                        $("#sysUserTable").datagrid("reload");
+                    } else {
+                        $("#passowrdDialog").dialog("close");
+                        HdUtil.messager.error(data);
+                    }
+                }, error: function (data) {
+                    $.messager.progress('close');
+                    HdUtil.messager.error(data);
+                }
+            });
+        }
+        //删除
+        function sysUserDelete() {
+            var row = $("#sysUserTable").datagrid("getSelected");
+            if (row) {
+                $.messager.confirm(HdUtil.constant.CONFIRM, HdUtil.constant.DELETE_CONFIRM, function (r) {
+                    if (r) {
+                        $.ajax({
+                            method: "post",
+                            url: "/SysUser/deleteUser",
+                            data: {
+                                userId: row.userId
+                            },
+                            success: function (data) {
+                                if (data == "success") {
+                                    HdUtil.messager.slide(HdUtil.constant.DELETE_SUCCESS);
+                                    $("#sysUserTable").datagrid("reload");
+                                } else {
+                                    HdUtil.messager.error(data);
+                                }
+                            }, error: function (data) {
+                                HdUtil.messager.error("系统异常，请联系管理员");
+                            }
+                        });
+                    }
+                });
+            } else {
+                HdUtil.messager.error("请选择要删除的记录");
+            }
+        }
+    </script>
+</head>
+<body>
+<div id="sysUserToolBar" style="height: 40px">
+    <form id="serachForm" style="align-items: center;margin-top: 2px">
+        &nbsp;
+        <span>姓名：</span>
+        <input id="nickName" class="easyui-textbox" data-options="prompt:'姓名'"/>&nbsp;
+        <a class="easyui-linkbutton" iconCls="icon-search" onclick="sysUserQuery()">查询</a>
+        <a class="easyui-linkbutton" iconCls="icon-add" onclick="sysUserAdd()">添加</a>
+        <a class="easyui-linkbutton" iconCls="icon-edit" onclick="sysUserEdit()">编辑</a>
+        <a class="easyui-linkbutton" iconCls="icon-remove" onclick="sysUserDelete()">删除</a>
+
+    </form>
+</div>
+<table id="sysUserTable" data-options="fit:true,border:false"></table>
+<div id="sysUserDialog" class="easyui-dialog"
+     style="width:380px;height:300px;padding-bottom:0px;overflow-y:hidden;"
+     closed="true" buttons="#sysUserRecord-dlg-buttons" data-options=" cache: false,modal: true" title="添加用户">
+    <form id="sysUserRecordForm" class="dialogForm" method="post" novalidate style="padding-bottom:0px;">
+        <div >
+            <label>真实名称：</label>
+            <input name="nickName" class="easyui-textbox notUpperCase" id="nickNameInput"
+                   data-options="required:true" style="width:180px;">
+        </div>
+        <div >
+            <label>用户名称：</label>
+            <input name="userName" class="easyui-textbox notUpperCase" id="userNameInput"
+                   data-options="required:true" style="width:180px;">
+        </div>
+        <div>
+            <label>登录密码：</label>
+            <input name="passwordInput" class="easyui-textbox notUpperCase" type="password" id="passwordInput"
+                   data-options="required:true,validType:'password'" style="width:180px;">
+        </div>
+        <div >
+            <label>手机号码：</label>
+            <input name="phone" class="easyui-textbox"
+                   data-options="required:true" style="width:180px;">
+        </div>
+        <div >
+            <label>邮箱地址：</label>
+            <input name="email" class="easyui-textbox notUpperCase"
+                   data-options="required:true" style="width:180px;">
+        </div>
+        <div >
+            <label>用户状态：</label>
+            <input type="radio" name="isEnable" value="0" checked="checked"/>正常
+            <input type="radio" name="isEnable" value="1"/>取消
+        </div>
+        <input type="hidden" name="userId"/>
+        <input type="hidden" name="password"/>
+    </form>
+</div>
+<div id="sysUserRecord-dlg-buttons">
+    <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="javascript:sysUserRecordSave();return false;">保存</a>
+    <a href="#" class="easyui-linkbutton" iconCls="icon-cancel"
+       onclick="javascript:$('#sysUserDialog').dialog('close');return false;">关闭</a>
+</div>
+
+<div id="passowrdDialog" class="easyui-dialog" style="width:240px;height:220px;padding:10px 15px;padding-bottom:0px;"
+     closed="true" buttons="#password-dlg-buttons" data-options=" cache: false,modal: true" title="重置密码">
+    <form id="passwordForm" class="dialogForm" method="post" novalidate style="padding-bottom:0px;">
+        <div >
+            <label>用户账号：</label>
+            <input name="userName" class="easyui-textbox" disabled="disabled" style="width:180px;">
+        </div>
+        <div >
+            <label>新密码：</label>
+            <input name="passwordInput" class="easyui-passwordbox"
+                   data-options="required:true" style="width:180px;">
+        </div>
+        <input type="hidden" name="userId"/>
+        <input type="hidden" name="password"/>
+    </form>
+</div>
+<div id="password-dlg-buttons">
+    <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="javascript:savePassword();return false;">保存</a>
+    <a href="#" class="easyui-linkbutton" iconCls="icon-cancel"
+       onclick="javascript:$('#passowrdDialog').dialog('close');return false;">关闭</a>
+</div>
+</body>
+</html>

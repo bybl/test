@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.huadong.mapper.SysUserRoleMapper">
+    <resultMap id="BaseResultMap" type="net.huadong.entity.SysUserRole">
+        <!--
+          WARNING - @mbg.generated
+        -->
+        <id column="ID" jdbcType="VARCHAR" property="id"/>
+        <result column="USER_ID" jdbcType="VARCHAR" property="userId"/>
+        <result column="ROLE_ID" jdbcType="VARCHAR" property="roleId"/>
+    </resultMap>
+    <delete id="deleteByRoleUserId">
+        delete from SYS_USER_ROLE WHERE role_id = #{rolerkey} and  user_id in
+        <foreach collection="delkeys" item="item" index="index" separator="," close=")" open="(">
+            ${item}
+        </foreach>
+    </delete>
+
+    <select id="getRolesByUserId" resultType="hashmap">
+    select role_id from SYS_USER_ROLE where user_id =#{userId}
+  </select>
+</mapper>

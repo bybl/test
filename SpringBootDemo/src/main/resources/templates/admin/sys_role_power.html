@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <meta charset="UTF-8">
+    <title>sys_role_power</title>
+    <meta charset="UTF-8">
+    <link href="/js/jquery-easyui-1.5.1/themes/default/easyui.css" rel="stylesheet" type="text/css"/>
+    <link href="/js/jquery-easyui-1.5.1/themes/icon.css" rel="stylesheet" type="text/css">
+    <link href="/js/jquery-easyui-1.5.1/themes/icon-standard.css?t=1" rel="stylesheet" type="text/css">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery-easyui-1.5.1/jquery.easyui.min.js"></script>
+    <script src="/js/jquery-easyui-1.5.1/locale/easyui-lang-zh_CN.js"></script>
+    <script src="/js/HdUtil.js?t=<%=new Date()%>"></script>
+    <script src="/js/jquery.md5.js"></script>
+    <script src="/js/easyuiValidate.js"></script>
+    <script type="text/javascript" th:inline="javascript">
+        /*<![CDATA[*/
+        var roleId = [[${roleId}]];
+        $(document).ready(function () {
+
+            console.log(roleId)
+
+            $('#power').treegrid({
+                idField: "id",
+                treeField: "text",
+                url: '/SysRole/selectAllPower?roleId='+roleId,
+                checkbox: true,
+                checkOnSelect: false,
+                onLoadSuccess: function (row, data) {
+                    debugger;
+                },
+                onCheckNode: function (row, checked) {
+                    if (!checked) {
+                        debugger;
+                        $("input[id^='datafilter_" + row.id + "']").each(function () {
+                            $(this).removeAttr("checked");
+                        });
+                    }
+                },
+                columns: [
+                    [
+                    {title: '菜单', field: 'text', width: '100%', halign: "center", align: "left"}
+                    ]
+                         ]
+            })
+
+        });
+
+        function dispalyRadio(value, row, typ) {
+            var str = '<input name="datafilter' + row.id + '" type="radio" value="' + typ + '" id="datafilter_' + row.id + '_' + typ + '"/>';
+            if (row.datefiltertype == typ) {
+                str = '<input name="datafilter' + row.id + '" checked="true" type="radio" value="' + typ + '" id="datafilter_' + row.id + '_' + typ + '"/>';
+            }
+            if (parseInt(row.datefilter) >= parseInt(typ)) {
+                return str;
+            }
+            return "";
+        }
+
+        function savePower() {
+            //var role = $("#rolesTable").datagrid("getSelected");
+            var tree = $('#power').treegrid("getCheckedNodes");
+            // console.log("选择的节点数："+tree.length)
+            var treeNotSure = $("#power").treegrid('getCheckedNodes', 'indeterminate');
+            var resourceIds = "";
+            for (var i = 0; i < tree.length; i++) {
+                resourceIds += tree[i].id + ',';
+            }
+            for (var i = 0; i < treeNotSure.length; i++) {
+                resourceIds += treeNotSure[i].id + ",";
+            }
+            $.ajax({
+                method: 'post',
+                url: "/SysRole/empower",
+                data: {
+                    roleId: roleId,
+                    resourceIds: resourceIds
+                },
+                success: function (data) {
+                    if (data == "success") {
+                    } else {
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    console.log(textStatus);
+                    console.log(errorThrown);
+                }
+            });
+            return true;
+        }
+
+        /*]]>*/
+    </script>
+</head>
+<body class="easyui-layout">
+
+<div data-options="region:'center',title:'',split:false" style="border: 0px">
+    <table id="power" style="margin: 0px"></table>
+</div>
+
+</body>
+</html>

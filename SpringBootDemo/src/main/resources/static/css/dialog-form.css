@@ -1,0 +1,33 @@
+@charset "utf-8";
+
+.dialogForm {
+    margin: 0;
+    padding: 10px 10px;
+}
+
+.formTitle {
+    font-size: 14px;
+    font-weight: bold;
+    padding: 5px 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.formItem {
+    margin-bottom: 6px;
+}
+
+.formItem label {
+    display: inline-block;
+    width: 60px;
+    text-align: right;
+}
+
+.dialogForm .dialogCheckBox {
+    margin: 0px;
+}
+
+.formItem textarea:not(.notUpperCase) + span .textbox-text {
+    text-transform: none;
+    font-family: "Microsoft YaHei";
+}

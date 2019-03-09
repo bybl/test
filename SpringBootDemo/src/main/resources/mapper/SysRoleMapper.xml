@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.huadong.mapper.SysRoleMapper">
+  <resultMap id="BaseResultMap" type="net.huadong.entity.SysRole">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="ROLE_ID" jdbcType="VARCHAR" property="roleId" />
+    <result column="ROLE_NAME" jdbcType="VARCHAR" property="roleName" />
+    <result column="REMARK" jdbcType="VARCHAR" property="remark" />
+    <result column="CREATE_USER" jdbcType="VARCHAR" property="createUser" />
+    <result column="CREATE_TIME" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="UPDATE_USER" jdbcType="VARCHAR" property="updateUser" />
+    <result column="UPDATE_TIME" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="IS_ENABLE" jdbcType="CHAR" property="isEnable" />
+  </resultMap>
+
+  <resultMap id="treeMap" type="net.huadong.util.ResourceTree">
+    <id column="RESOURCE_ID" property="id"/>
+    <result column="MENU_NAME" property="text"/>
+    <result column="MENU_NAME" property="menuName"/>
+    <result column="PERMISSION_NAME" property="permissionName"/>
+    <result column="MENU_URL" property="url"/>
+    <result column="ICON" property="icon"/>
+    <result column="PARENT_ID" property="parentId"/>
+    <result column="SEQ_NUM" property="seqNum"/>
+    <collection property="children" column="RESOURCE_ID" ofType="net.huadong.util.ResourceTree"
+                select="getChildrenMenu"/>
+  </resultMap>
+
+  <select id="getRole" resultMap="BaseResultMap">
+    select r.*,
+    u1.user_name as create_name,
+    u2.user_name as update_name
+    from SYS_ROLE r
+    LEFT JOIN sys_user u1 on u1.user_id = r.create_user
+    LEFT JOIN sys_user u2 on u2.user_id = r.update_user
+    where 1=1
+    <if test="roleName!= null and roleName != ''">
+      and r.role_name like concat('%',concat(#{roleName},'%'))
+    </if>
+    <if test="sort!=null and sort!=''">
+      order by r.${sort} ${order}
+    </if>
+  </select>
+
+
+  <select id="getAllPower" resultMap="treeMap">
+SELECT
+        t1.resource_id ,
+        MENU_NAME  ,
+        MENU_URL   ,
+        icon,
+        parent_id,
+        SEQ_NUM,
+        disabled
+        FROM sys_resource t1
+        WHERE t1.parent_id IS NULL
+        and nvl(disabled,'0') = '0'
+        ORDER BY SEQ_NUM
+    </select>
+
+
+
+    <!--获取子菜单-->
+    <select id="getChildrenMenu" resultMap="treeMap">
+     SELECT
+        t1.resource_id,
+        nvl(MENU_NAME,PERMISSION_NAME) MENU_NAME ,
+        MENU_URL,
+        icon,
+        parent_id,
+        SEQ_NUM,
+        disabled
+        FROM sys_resource t1
+        WHERE t1.parent_id = #{id}
+        and nvl(disabled,'0') = '0'
+        ORDER BY SEQ_NUM
+  </select>
+
+  <!-- 根据userId查询用户授权信息 -->
+  <select id="selectByRoleId" resultType="string">
+    SELECT RESOURCE_ID
+    FROM sys_role_resource
+    WHERE ROLE_ID = #{roleId}
+  </select>
+
+
+    <!--删除角色权限，并重新赋予权限-->
+    <select id="deleteByRoleId" resultType="integer">
+    delete from sys_role_resource where ROLE_GKEY = #{roleId}
+  </select>
+
+    <!--获得船公司箱属-->
+    <select id="getShipCorpCntrList" resultType="string">
+    select DISTINCT cntr_corp_cod
+    from COD_SHIP_CNTR_CORP_REF t
+    where t.ship_corp_cod = #{shipCorpCod}
+  </select>
+    <!--获得船公司授权代理-->
+    <select id="getShipCorpAgentList" resultType="string">
+    select DISTINCT ship_agent_cod
+    from cod_ship_corp_agent t
+    where exists (select 1
+    from cod_ship_cntr_corp_ref r
+    where t.cntr_corp_cod = r.cntr_corp_cod
+    and r.ship_corp_cod = #{shipCorpCod})
+  </select>
+</mapper>

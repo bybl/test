@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.huadong.mapper.SysLogMapper">
+  <resultMap id="BaseResultMap" type="net.huadong.entity.SysLog">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <result column="ID" jdbcType="VARCHAR" property="id"/>
+    <result column="CLASS_NAME" jdbcType="VARCHAR" property="className"/>
+    <result column="METHOD_NAME" jdbcType="VARCHAR" property="methodName"/>
+    <result column="USER_ID" jdbcType="VARCHAR" property="userId"/>
+    <result column="USER_NAME" jdbcType="VARCHAR" property="userName"/>
+    <result column="OPER_REMARK" jdbcType="VARCHAR" property="operRemark"/>
+    <result column="CHANGE_TXT" jdbcType="VARCHAR" property="changeTxt"/>
+    <result column="IP" jdbcType="VARCHAR" property="ip"/>
+    <result column="CREATE_TIME" jdbcType="TIMESTAMP" property="createTime"/>
+    <result column="OPER_TYPE" jdbcType="VARCHAR" property="operType"/>
+  </resultMap>
+
+  <select id="getLog" resultMap="BaseResultMap">
+    select *
+    from sys_log
+    <where>
+      <if test="userName!=null and userName !=''">
+        AND USER_NAME like concat('%',concat(#{userName},'%'))
+      </if>
+      <if test="action !=null and action !=''">
+        AND OPER_REMARK like concat('%',concat(#{action},'%'))
+      </if>
+      <if test="createdBg!=null and createdBg!= ''">
+        AND CREATE_TIME >= to_date(concat(#{createdBg},' 00:00:00'),'yyyy-mm-dd hh24:mi:ss')
+      </if>
+      <if test="createdEd!=null and createdEd !=''">
+        AND to_date(concat(#{createdEd},' 23:59:59'),'yyyy-mm-dd hh24:mi:ss') >= CREATE_TIME
+      </if>
+    </where>
+    order by CREATE_TIME desc
+  </select>
+</mapper>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.huadong.mapper.DemoMapper">
+    <cache type="org.mybatis.caches.ehcache.EhcacheCache">
+        <property name="timeToIdleSeconds" value="60"></property>
+        <!--<!–当缓存闲置60秒后销毁–>-->
+        <property name="timeToLiveSeconds" value="160"></property><!--<!–缓存存在160秒后销毁–>-->
+        <property name="maxEntriesLocalHeap" value="1000"></property>
+        <property name="maxEntriesLocalDisk" value="10000000"></property>
+        <property name="memoryStoreEvictionPolicy" value="LRU"></property>
+    </cache>
+
+  <resultMap id="BaseResultMap" type="net.huadong.entity.Demo">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="ID" jdbcType="VARCHAR" property="id" />
+    <result column="NAME" jdbcType="VARCHAR" property="name" />
+  </resultMap>
+
+  <insert id="insertUser" parameterType="net.huadong.entity.Demo">
+           insert into demo(id, name)
+               values(#{id}, #{name})
+   </insert>
+
+    <select id="searchDemo" resultType="net.huadong.entity.Demo">
+        select * from demo
+    </select>
+
+</mapper>

@@ -1,0 +1,5 @@
+1.框架采用mybatis ，已经做好驼峰命名法的配置，在mapper中不需要每次都写resultMapper，可以使用resultType;
+2.前台使用<shiro>标签只能在html中使用,js不能使用，并且必须是通过controller返回的页面在可以使用，直接写在page的页面不能用
+3.框架在mybatis上使用了基于ehcache的二级缓存，整体框架无需配置，在mapper上开启即可，注意：实体需要实现序列化接口，具体参照demoMapper，二级缓存适用于大量的查询，但是增改不多的场景。
+  如需要的话也可将ehcache替换成redis;
+4.

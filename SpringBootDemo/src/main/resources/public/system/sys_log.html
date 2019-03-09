@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>系统日志</title>
+    <meta charset="UTF-8">
+    <title>角色管理</title>
+    <meta charset="UTF-8">
+    <link href="/js/jquery-easyui-1.5.1/themes/default/easyui.css" rel="stylesheet" type="text/css"/>
+    <link href="/js/jquery-easyui-1.5.1/themes/icon.css?t=<%=new Date()%>" rel="stylesheet" type="text/css">
+    <link href="/js/jquery-easyui-1.5.1/themes/icon-standard.css?t=1" rel="stylesheet" type="text/css">
+    <link href="/css/dialog-form.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="/h-ui.admin/css/H-ui.admin.css" />
+    <link rel="stylesheet" type="text/css" href="/lib/Hui-iconfont/1.0.8/iconfont.css" />
+    <link rel="stylesheet" type="text/css" href="/h-ui.admin/skin/green/skin.css" id="skin" />
+    <link rel="stylesheet" type="text/css" href="/h-ui.admin/css/style.css" />
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery-easyui-1.5.1/jquery.easyui.min.js"></script>
+    <script src="/js/jquery-easyui-1.5.1/locale/easyui-lang-zh_CN.js"></script>
+    <script src="/js/HdUtil.js"></script>
+    <script src="/js/jquery.md5.js"></script>
+    <script src="/js/easyuiValidate.js"></script>
+    <style type="text/css">
+        textarea {
+            font-family: "Microsoft YaHei";
+        }
+    </style>
+    <script type="text/javascript">
+     $(function () {
+         // 初始化当前日期
+         $('#createdBg,#createdEd').datebox('setValue', HdUtil.date.getCurrentDate());
+         // 只能选择当前时间之前的日期
+         $('#createdBg').datebox('calendar').calendar({
+             editable: false,
+             validator: function (date) {
+                 var now = new Date();
+                 var d1 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                 return date <= d1;
+             }
+         });
+         $('#createdEd').datebox('calendar').calendar({
+             editable: false,
+             validator: function (date) {
+                 var now = new Date();
+                 var d1 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                 return date <= d1;
+             }
+         });
+
+
+         $('#paramsTable').datagrid({
+             url: '/SysLog/getLog',
+             method: "get",
+             fit: true,
+             queryParams: {
+                 userName: "",
+                 action: "",
+                 createdBg: $('#createdBg').datebox('getValue'),
+                 createdEd: $('#createdEd').datebox('getValue')
+             },
+             striped: true,
+             rownumbers: true,
+             pagination: true,
+             singleSelect: true,
+             pageSize: HdUtil.constant.PAGE_SIZE,
+             columns: [[{
+                 width: '80',
+                 title: '用户名称',
+                 field: 'userName',
+                 align: 'center'
+             },
+                 {
+                     width: '140',
+                     title: '用户操作',
+                     field: 'operRemark',
+                     align: 'center'
+                 }, {
+                     width: '330',
+                     title: '请求类名称',
+                     field: 'className',
+                     align: 'left',
+                     halign: 'center'
+                 },
+                 {
+                     width: '120',
+                     title: '请求方法',
+                     field: 'methodName',
+                     align: 'left',
+                     halign: 'center'
+                 }, {
+                     width: '330',
+                     title: '请求参数',
+                     field: 'changeTxt',
+                     align: 'left',
+                     halign: 'center'
+                 },
+                 {
+                     width: '80',
+                     title: '操作种类',
+                     field: 'operType',
+                     align: 'left',
+                     halign: 'center'
+                 }, {
+                     width: '80',
+                     title: 'IP地址',
+                     field: 'ip',
+                     align: 'center'
+                 }, {
+                     width: '150',
+                     title: '操作时间',
+                     field: 'createTime',
+                     align: 'center',
+                     formatter: function (value) {
+                         return new Date(value).format("yyyy-MM-dd hh:mm:ss");
+                     }
+                 }
+             ]],
+             toolbar: '#paramsTableToolBar'
+         });
+     });
+
+
+     //查询
+     function searchLog() {
+         var createdBg = $('#createdBg').datebox('getValue');
+         var createdEd = $('#createdEd').datebox('getValue');
+         if (!HdUtil.date.compDate(createdBg, createdEd)) {
+             HdUtil.messager.error("结束日期应大于开始日期");
+             return;
+         }
+         $('#paramsTable').datagrid('load', {
+             userName: $("#userName").val(),
+             action: $("#action").val(),
+             createdBg: createdBg,
+             createdEd: createdEd
+         });
+     }
+
+     // 扩展日期选择验证
+     $.extend($.fn.validatebox.defaults.rules, {
+         equaldDate: {
+             validator: function (value, param) {
+                 var start = $(param[0]).datetimebox('getValue');
+                 return HdUtil.date.compDate(start, value);
+             },
+             message: '结束日期应大于开始日期'
+         }
+     });
+
+
+
+
+
+
+    </script>
+</head>
+<body>
+<div id="paramsTableToolBar" style="height: 36px;">
+    <form id="searchForm" style="align-items: center; margin-top:2px;">
+        <span>用户名称:</span>
+        <input name="userName" id="userName" data-options="prompt:'请输入用户名称'" class="easyui-textbox"/>&nbsp;
+        <span>用户操作:</span>
+        <input name="action" id="action" data-options="prompt:'请输入用户操作'" class="easyui-textbox"/>&nbsp;
+        <span>操作日期:</span>
+        <input id="createdBg" class="easyui-datebox" data-options="editable:false" style="width:120px;"> - <input
+            id="createdEd" class="easyui-datebox" data-options="editable:false,validType:'equaldDate[\'#createdBg\']'"
+            style="width:120px;">
+        <a class="easyui-linkbutton" iconCls="icon-search" onclick="searchLog()">查询</a>
+    </form>
+</div>
+<table id="paramsTable" data-options="fit:true,border:false"></table>
+</body>
+</html>

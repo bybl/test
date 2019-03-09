@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <meta charset="UTF-8">
+    <title>SpringBoot Demo</title>
+    <link href="/js/jquery-easyui-1.5.1/themes/default/easyui.css" rel="stylesheet" type="text/css"/>
+    <link href="/js/jquery-easyui-1.5.1/themes/icon.css" rel="stylesheet" type="text/css">
+    <link href="/js/jquery-easyui-1.5.1/themes/icon-standard.css" rel="stylesheet" type="text/css">
+    <link href="/js/jquery-easyui-1.5.1/themes/icon-hamburg.css" rel="stylesheet" type="text/css">
+    <link href="/css/head.css" rel="stylesheet" type="text/css">
+    <link href="/css/index.css" rel="stylesheet" type="text/css">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/HdUtil.js"></script>
+    <script src="/js/jquery-easyui-1.5.1/jquery.easyui.min.js"></script>
+    &lt;!&ndash; <link rel="icon" href="${ctx}/images/favicon.ico" type="image/x-icon"/>&ndash;&gt;
+
+
+
+    <script type="text/javascript">
+        function openTab(title, href) {
+            var content = '<iframe name="indextab" scrolling="auto" src="' + href + '" frameborder="0" style="width:100%;height:100%;"></iframe>';
+            var e = $('#main').tabs('exists', title);
+            if (e) {
+                $("#main").tabs('select', title);
+                var tab = $("#main").tabs('getSelected');
+                $('#main').tabs('update', {
+                    tab: tab,
+                    options: {
+                        title: title,
+                        content: content,
+                        closable: true,
+                        selected: true,
+                        tools: [{
+                            iconCls: 'icon-mini-refresh',
+                            handler: function () {
+                                var tab = $('#main').tabs('getSelected'); // get selected panel
+                                $('#main').tabs('update', {
+                                    tab: tab,
+                                    options: {
+                                        title: title,
+                                        content: content
+                                    }
+                                });
+                            }
+                        }]
+                    }
+                });
+            } else {
+                $('#main').tabs('add', {
+                    title: title,
+                    content: content,
+                    iconCls: '',
+                    closable: true,
+                    tools: [{
+                        iconCls: 'icon-mini-refresh',
+                        handler: function () {
+                            var tab = $('#main').tabs('getSelected'); // get selected panel
+                            $('#main').tabs('update', {
+                                tab: tab,
+                                options: {
+                                    title: title,
+                                    content: content
+                                }
+                            });
+                        }
+                    }]
+                });
+            }
+        }
+        $(document).ready(function () {
+            $("#nowDate").html(HdUtil.date.getCurrentDate());
+            $("#changePasswordDialog").dialog({
+                title: "修改密码",
+                width: 350,
+                height: 250,
+                closed: true,
+                cache: false,
+                modal: true,
+                buttons: [{
+                    text: '提交',
+                    handler: function () {
+                        $("#oldPassword").passwordbox("setValue", $.trim($("#oldPassword").passwordbox("getValue")));
+                        $("#newPassword1").passwordbox("setValue", $.trim($("#newPassword1").passwordbox("getValue")));
+                        $("#newPassword2").passwordbox("setValue", $.trim($("#newPassword2").passwordbox("getValue")));
+                        var oldPwd = $("#oldPassword").passwordbox("getValue");
+                        var newPwd1 = $("#newPassword1").passwordbox("getValue");
+                        var newPwd2 = $("#newPassword2").passwordbox("getValue");
+                        if ($("#changePasswordForm").form("validate")) {
+                            if (newPwd1 == newPwd2) {
+                                var patrn = /^(\w){6,20}$/;
+                                if (patrn.exec(newPwd1)) {
+                                    $.ajax({
+                                        url: "/test",
+                                        data: {
+                                            oldPwd: oldPwd,
+                                            newPwd: newPwd1
+                                        },
+                                        success: function (data) {
+                                            if (data == "success") {
+                                                $("#changePasswordDialog").dialog("close");
+                                                HdUtil.messager.slide("修改成功");
+                                            } else {
+                                                HdUtil.messager.info(data);
+                                            }
+                                        }
+                                    })
+                                } else {
+                                    HdUtil.messager.info("密码由6-20个字母、数字、下划线组成");
+                                }
+                            } else {
+                                HdUtil.messager.info("2次新密码输入不一致!");
+                            }
+                        }
+                    }
+                }, {
+                    text: '关闭',
+                    handler: function () {
+                        $("#changePasswordDialog").dialog("close");
+                    }
+                }]
+            });
+            var mainPanel = $("#main");
+            $("#menuTree").tree({
+                method: "get",
+                url: "/SysResource/getUserMenu",
+                onClick: function (node) {
+                    var url = node.url;
+                    if (url && url != "" && url !== null && url != undefined) {
+                        if (mainPanel.tabs('exists', node.text)) {
+                            mainPanel.tabs('select', node.text);
+                        } else {
+                            var content = '<iframe scrolling="no" frameborder="0"  src="' + encodeURI("${ctx}" + url) + '" style="width:100%;height:100%;"></iframe>';
+                            mainPanel.tabs('add', {
+                                title: node.text,
+                                content: content,
+                                cache: true,
+                                closable: true,
+                                tools: [{
+                                    iconCls: 'icon-mini-refresh',
+                                    handler: function () {
+                                        var tab = $('#main').tabs('getSelected'); // get selected panel
+                                        $('#main').tabs('update', {
+                                            tab: tab,
+                                            options: {
+                                                title: node.text,
+                                                content: content
+                                            }
+                                        });
+                                    }
+                                }]
+                            });
+                        }
+                    }
+                },
+                onLoadSuccess: function (node, data) {
+// var content = '<iframe scrolling="no" frameborder="0"  src="/login/welcome.jsp" style="width:100%;height:100%;"></iframe>';
+// mainPanel.tabs('add', {
+//     title: "设备实时动态记录",
+//     content: content,
+//     cache: true,
+//     closable: false
+//
+// });
+                }
+            });
+        });
+        function changePassword() {
+            $("#changePasswordForm").form("clear");
+            $("#changePasswordDialog").dialog("open");
+        }
+        function goWelcome() {
+            $("#main").tabs("select", "欢迎页");
+        }
+        function refreshCurrentTab() {
+            var currTab = $('#main').tabs('getSelected'); //获得当前tab
+            var content = currTab.panel('options').content;
+            $('#main').tabs('update', {
+                tab: currTab,
+                options: {
+                    content: content
+                }
+            });
+        }
+        function closeOtherTab() {
+            var currentTabTitle = $("#main").tabs("getSelected").panel("options").title;
+            var titles = new Array();
+            var tabs = $('#main').tabs('tabs');
+            var len = tabs.length;
+            if (len > 0) {
+                for (var j = 0; j < len; j++) {
+                    var a = tabs[j].panel('options').title;
+                    titles.push(a);
+                }
+                for (var i = 0; i < titles.length; i++) {
+                    if (titles[i] != "欢迎页" && titles[i] != currentTabTitle) {
+                        $('#main').tabs('close', titles[i]);
+                    }
+                }
+                $('#main').tabs("select", currentTabTitle);
+            }
+        }
+        function closeAllTab() {
+            var titles = new Array();
+            var tabs = $('#main').tabs('tabs');
+
+            var len = tabs.length;
+            if (len > 0) {
+                for (var j = 0; j < len; j++) {
+                    var a = tabs[j].panel('options').title;
+                    titles.push(a);
+                }
+                for (var i = 0; i < titles.length; i++) {
+                    if (titles[i] != "欢迎页") {
+                        $('#main').tabs('close', titles[i]);
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/css">
+        .tableform {
+            margin: 16px auto;
+        }
+
+        .tableform tr {
+            height: 30px;
+        }
+
+        .tableform th {
+            text-align: right;
+            color: #000000;
+            white-space: nowrap;
+        }
+
+        .tableform td {
+            text-align: left;
+            width: 80px;
+        }
+
+        .tableform input {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div id="mainTabs_tools" class="tabs-tool" style="height: 26px; right: 0px;">
+    <table>
+        <tbody>
+        <tr>
+            <td>
+                <div class="datagrid-btn-separator"></div>
+            </td>
+            <td><a onclick="goWelcome()" id="mainTabs_indexTab" class="easyui-linkbutton" title="欢迎页"
+                   data-options="plain: true, iconCls: 'icon-hamburg-home'"></a></td>
+            <td>
+                <div class="datagrid-btn-separator"></div>
+            </td>
+            <td><a onclick="refreshCurrentTab()" id="mainTabs_refreshTab" class="easyui-linkbutton" title="刷新当前标签页"
+                   data-options="plain: true, iconCls: 'icon-standard-arrow-refresh'"></a></td>
+            <td>
+                <div class="datagrid-btn-separator"></div>
+            </td>
+            <td><a onclick="closeOtherTab()" id="mainTabs_closeOtherTab" class="easyui-linkbutton" title="关闭其他标签页"
+                   data-options="plain: true, iconCls: 'icon-standard-application-delete'"></a></td>
+            <td>
+                <div class="datagrid-btn-separator"></div>
+            </td>
+            <td><a onclick="closeAllTab()" class="easyui-linkbutton" title="关闭所有标签页"
+                   data-options="plain: true, iconCls: 'icon-standard-application-form-delete'"></a></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<div id="changePasswordDialog">
+    <form id="changePasswordForm">
+        <table align="center" style="height:60%;weight:100%" class="tableform">
+            <tbody>
+            <tr>
+                <td align="right">旧密码:</td>
+                <td><input id="oldPassword" name="oldPassword" class="easyui-passwordbox" data-options="required:true">
+                </td>
+            </tr>
+            <tr>
+                <td align="right">新密码:</td>
+                <td><input id="newPassword1" name="newPassword1" class="easyui-passwordbox"
+                           data-options="required:true"></td>
+            </tr>
+            <tr>
+                <td style="width: 100px">新密码确认:</td>
+                <td><input id="newPassword2" name="newPassword2" class="easyui-passwordbox"
+                           data-options="required:true"></td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+<div class="easyui-layout" fit="true">
+    <div data-options="region:'north',border:true" style="height:80px;">
+        <div class="head">
+            <span class="welcome">欢迎您， <b class=""><shiro:principal property='userName'></shiro:principal></b></span>
+            <span class="dateToday">今天是：<b class="" id="nowDate"></b></span>
+            <span class="welcome">当前在线人数： <b class="" th:text="${count}"></b></span>
+            <a href="/logout" class="logoff">退出登录</a>
+            <a href="javascript:;" class="changePassWord" onclick="changePassword()">修改密码</a>
+        </div>
+    </div>
+    <div data-options="region:'west',title:'导航窗口',split:true" style="width:220px;background-color: #f1f2f4">
+        <ul id="menuTree"></ul>
+    </div>
+
+    <div data-options="region:'center'">
+        <div id="main" class="easyui-tabs" data-options="fit:true,tools: '#mainTabs_tools'"></div>
+    </div>
+</div>
+</body>
+</html>

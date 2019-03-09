@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="common_css(links)">
+    <link href="/static/plugins/jquery-easyui-1.6.8/themes/default/easyui.css"
+          th:href="@{~/plugins/jquery-easyui-1.6.8/themes/default/easyui.css}" rel="stylesheet"/>
+    <link href="/static/plugins/jquery-easyui-1.6.8/themes/icon.css"
+          th:href="@{~/static/plugins/jquery-easyui-1.6.8/themes/icon.css}" rel="stylesheet"/>
+    <th:block th:replace="${links}" />
+</div>
+</html>

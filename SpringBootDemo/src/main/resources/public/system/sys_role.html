@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <meta charset="UTF-8">
+    <title>角色管理</title>
+    <meta charset="UTF-8">
+    <link href="/js/jquery-easyui-1.5.1/themes/default/easyui.css" rel="stylesheet" type="text/css"/>
+    <link href="/js/jquery-easyui-1.5.1/themes/icon.css?t=<%=new Date()%>" rel="stylesheet" type="text/css">
+    <link href="/js/jquery-easyui-1.5.1/themes/icon-standard.css?t=1" rel="stylesheet" type="text/css">
+    <link href="/css/dialog-form.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="/h-ui.admin/css/H-ui.admin.css" />
+    <link rel="stylesheet" type="text/css" href="/lib/Hui-iconfont/1.0.8/iconfont.css" />
+    <link rel="stylesheet" type="text/css" href="/h-ui.admin/skin/green/skin.css" id="skin" />
+    <link rel="stylesheet" type="text/css" href="/h-ui.admin/css/style.css" />
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery-easyui-1.5.1/jquery.easyui.min.js"></script>
+    <script src="/js/jquery-easyui-1.5.1/locale/easyui-lang-zh_CN.js"></script>
+    <script src="/js/HdUtil.js"></script>
+    <script src="/js/jquery.md5.js"></script>
+    <script src="/js/easyuiValidate.js"></script>
+    <style type="text/css">
+        textarea {
+            font-family: "Microsoft YaHei";
+        }
+    </style>
+    <script type="text/javascript">
+        var wholeRoleId = "";
+        var currRoleCode = "";
+        var oldUserKeys = "";
+        function Map() {
+            this.elements = new Array();
+            //获取MAP元素个数
+            this.size = function () {
+                return this.elements.length;
+            };
+            //判断MAP是否为空
+            this.isEmpty = function () {
+                return (this.elements.length < 1);
+            };
+            //删除MAP所有元素
+            this.clear = function () {
+                this.elements = new Array();
+            };
+            //向MAP中增加元素（key, value)
+            this.put = function (_key, _value) {
+                this.elements.push({
+                    key: _key,
+                    value: _value
+                });
+            };
+            //删除指定KEY的元素，成功返回True，失败返回False
+            this.remove = function (_key) {
+                var bln = false;
+                try {
+                    for (i = 0; i < this.elements.length; i++) {
+                        if (this.elements[i].key == _key) {
+                            this.elements.splice(i, 1);
+                            return true;
+                        }
+                    }
+                } catch (e) {
+                    bln = false;
+                }
+                return bln;
+            };
+            //获取指定KEY的元素值VALUE，失败返回NULL
+            this.get = function (_key) {
+                try {
+                    for (i = 0; i < this.elements.length; i++) {
+                        if (this.elements[i].key == _key) {
+                            return this.elements[i].value;
+                        }
+                    }
+                } catch (e) {
+                    return null;
+                }
+            };
+            //获取指定索引的元素（使用element.key，element.value获取KEY和VALUE），失败返回NULL
+            this.element = function (_index) {
+                if (_index < 0 || _index >= this.elements.length) {
+                    return null;
+                }
+                return this.elements[_index];
+            };
+            //判断MAP中是否含有指定KEY的元素
+            this.containsKey = function (_key) {
+                var bln = false;
+                try {
+                    for (i = 0; i < this.elements.length; i++) {
+                        if (this.elements[i].key == _key) {
+                            bln = true;
+                        }
+                    }
+                } catch (e) {
+                    bln = false;
+                }
+                return bln;
+            };
+            //判断MAP中是否含有指定VALUE的元素
+            this.containsValue = function (_value) {
+                var bln = false;
+                try {
+                    for (i = 0; i < this.elements.length; i++) {
+                        if (this.elements[i].value == _value) {
+                            bln = true;
+                        }
+                    }
+                } catch (e) {
+                    bln = false;
+                }
+                return bln;
+            };
+            //获取MAP中所有VALUE的数组（ARRAY）
+            this.values = function () {
+                var arr = new Array();
+                for (i = 0; i < this.elements.length; i++) {
+                    arr.push(this.elements[i].value);
+                }
+                return arr;
+            };
+            //获取MAP中所有KEY的数组（ARRAY）
+            this.keys = function () {
+                var arr = new Array();
+                for (i = 0; i < this.elements.length; i++) {
+                    arr.push(this.elements[i].key);
+                }
+                return arr;
+            };
+        }
+
+        $(document).ready(function () {
+            //管理人员的界面
+            $("#manageDialog").dialog({
+                title: "人员管理",
+                width: 650,
+                height: 450,
+                closed: true,
+                cache: false,
+                modal: true
+            });
+            $("#leftSelect").datalist({
+                title: "未分配人员",
+                lines: true,
+                valueField: "userId",
+                textField: "nickName",
+                onDblClickRow: function (index, row) {
+
+                    addOne(index, row);
+                }
+            })
+            $("#rightSelect").datalist({
+                title: "已分配人员",
+                lines: true,
+                valueField: "userId",
+                textField: "nickName",
+                onDblClickRow: function (index, row) {
+                    removeOne(index, row)
+                }
+            })
+            $("#rolesDialog").dialog({
+                title: "角色维护",
+                width: 320,
+                height: 260,
+                closed: true,
+                cache: false,
+                modal: true
+            });
+            $('#power').treegrid({
+                idField: "id",
+                treeField: "text",
+                checkbox: true,
+                checkOnSelect: false,
+                selectOnCheck: false,
+                onCheckNode: function (row, checked) {
+                    if (!checked) {
+                        $("input[id^='datafilter_" + row.id + "']").each(function () {
+                            $(this).removeAttr("checked");
+                        });
+                    }
+                },
+                columns: [[
+                    {
+                        title: '菜单',
+                        field: 'text',
+                        width: 300,
+                        halign: 'center'
+                    }
+                ]]
+            });
+            $('#rolesTable').datagrid({
+                url: '/SysRole/getRole',
+                method: "get",
+                fit: true,
+                queryParams: {
+                    roleName: ""
+                },
+                striped: true,
+                rownumbers: true,
+                pagination: true,
+                singleSelect: true,
+                sortName: "createTime",
+                sortOrder: 'desc',
+                pageSize: HdUtil.constant.PAGE_SIZE,
+                columns: [[
+                    {
+                        width: '100',
+                        title: '角色名称',
+                        field: 'roleName',
+                        align: 'center',
+                        halign: 'center'
+                    }, {
+                        width: '130',
+                        title: '描述',
+                        halign: 'center',
+                        align: 'center',
+                        field: 'remark'
+                    }, {
+                        width: '200',
+                        title: '操作',
+                        halign: 'center',
+                        align: 'center',
+                        field: 'roleId',
+                        formatter: function (value) {
+                            return '<a href="#" class="pwdBtn" onclick="javascript:manageUser(\'' + value + '\');return false;">人员管理</a>' +
+                                '<a href="#" class="disBtn" onclick="javascript:epower(\'' + value + '\');return false;">功能分配</a>';
+                        }
+                    }, {
+                        width: '100',
+                        title: '创建人',
+                        align: 'center',
+                        halign: 'center',
+                        field: 'createName'
+                    }, {
+                        width: '160',
+                        title: '创建时间',
+                        halign: 'center',
+                        sortable: true,
+                        align: 'center',
+                        formatter: function (value) {
+                            return new Date(value).format("yyyy-MM-dd hh:mm");
+                        },
+                        field: 'createTime'
+                    }, {
+                        width: '100',
+                        title: '修改人',
+                        align: 'center',
+                        halign: 'center',
+                        field: 'updateName'
+                    }, {
+                        width: '160',
+                        title: '修改时间',
+                        sortable: true,
+                        align: 'center',
+                        halign: 'center',
+                        formatter: function (value) {
+                            return new Date(value).format("yyyy-MM-dd hh:mm");
+                        },
+                        field: 'updateTime'
+                    }
+                ]],
+                toolbar: '#rolesTableToolBar',
+                onLoadSuccess: function () {
+                    $('.pwdBtn').linkbutton({
+                        iconCls: 'icon-standard-server-edit',
+                        plain: true
+                    }).mousemove(function () {
+                        $(this).find(".l-btn-text").css({"text-decoration": "underline", "color": "red"});
+                    }).mouseout(function () {
+                        $(this).find(".l-btn-text").css({"text-decoration": "none", "color": "#000"});
+                    });
+                    $('.disBtn').linkbutton({
+                        iconCls: 'icon-standard-server-delete',
+                        plain: true
+                    }).mousemove(function () {
+                        $(this).find(".l-btn-text").css({"text-decoration": "underline", "color": "red"});
+                    }).mouseout(function () {
+                        $(this).find(".l-btn-text").css({"text-decoration": "none", "color": "#000"});
+                    });
+                    $(".datagrid-btable").find("a").css({"height": "22px"});
+                }
+            });
+        });
+
+        //管理人员
+        function manageUser(value) {
+            wholeRoleId = value;
+            $.ajax({
+                method: 'post',
+                url: "/SysRole/selectAllUser?roleId=" + value,
+                success: function (data) {
+
+                    loadleftdata(data);
+                },
+                error: function (data) {
+                    HdUtil.messager.error("查询失败:" + data);
+                }
+            });
+            $.ajax({
+                method: 'post',
+                url: "/SysRole/selectUserByRoleId?roleId=" + value,
+                success: function (data) {
+                    loadrightdata(data)
+                },
+                error: function (data) {
+                    HdUtil.messager.error("查询失败:" + data);
+                }
+            });
+            $("#manageDialog").dialog("open").window("center");
+        }
+
+        //功能分配
+        function epower(roleId) {
+            $("#frame").attr("src", "/SysUserRole/sysRolePower?roleId=" + roleId);
+            $("#powerDiaglog").dialog("open").window('center');
+        }
+
+        function recursionTree(id, node) {
+            if (node.checked) {
+                $("#power").treegrid("checkNode", id);
+            } else {
+                $("#power").treegrid("uncheckNode", id);
+            }
+            var nodes = $("#power").treegrid("getChildren", id);
+            if (nodes) {
+                for (var i = 0; i < nodes.length; i++) {
+                    recursionTree(nodes[i].id, nodes[i]);
+                }
+            }
+        }
+
+        //保存功能分配
+        //查询
+        function searchRoles() {
+            $('#rolesTable').datagrid('load', {
+                roleName: $.trim($("#roleName").val())
+            });
+        }
+
+        function dispalyRadio(value, row, typ) {
+            var str = '<input name="datafilter' + row.id + '" type="radio" value="' + typ + '" id="datafilter_' + row.id + '_' + typ + '"/>';
+            if (row.datefiltertype == typ) {
+                str = '<input name="datafilter' + row.id + '" checked="true" type="radio" value="' + typ + '" id="datafilter_' + row.id + '_' + typ + '"/>';
+            }
+            if (parseInt(row.datefilter) >= parseInt(typ)) {
+                return str;
+            }
+            return "";
+        }
+
+        function savePower() {
+            var key = $("#frame")[0].contentWindow.savePower()
+            if (key) {
+                $("#powerDiaglog").dialog("close");
+                HdUtil.messager.slide("授权成功");
+                $("#rolesTable").datagrid("reload");
+            } else {
+                $("#powerDiaglog").dialog("close");
+                HdUtil.messager.error("授权失败");
+            }
+        }
+
+        //保存用户
+        function saveRole() {
+            if (!$("#rolesForm").form("validate")) {
+                return false;
+            }
+            $.messager.progress();
+            $("#rolesForm").form("submit", {
+                url: "/SysRole/saveRole",
+                success: function (data) {
+                    $.messager.progress('close');
+                    if ("success" == data) {
+                        $("#rolesDialog").dialog("close");
+                        HdUtil.messager.slide("保存成功");
+                        $("#rolesTable").datagrid("reload");
+                    } else {
+                        $("#manageForm").form("clear");
+                        $("#rolesDialog").dialog("close");
+                        HdUtil.messager.error("保存失败:" + data);
+                    }
+                }
+            });
+        }
+
+        //新增角色页面跳转
+        function add() {
+            $("#rolesForm").form("clear");
+            $("#rolesDialog").dialog("open").window("center");
+        }
+
+        //修改角色页面跳转
+        function edit() {
+            var selectRow = $("#rolesTable").datagrid("getSelected");
+            if (selectRow) {
+                $("#rolesForm").form("clear").form("load", selectRow);
+                $("#rolesDialog").dialog("open").window("open");
+            } else {
+                HdUtil.messager.error("请选择要修改的记录");
+            }
+        }
+
+        //删除角色
+        function deleteRole() {
+            var selectRow = $("#rolesTable").datagrid("getSelected");
+            if (selectRow) {
+                $.messager.confirm(HdUtil.constant.CONFIRM, HdUtil.constant.DELETE_CONFIRM, function (r) {
+                    if (r) {
+                        $.ajax({
+                            method: "post",
+                            url: "/SysRole/delete",
+                            async: false,
+                            data: {
+                                roleId: selectRow.roleId
+                            },
+                            success: function (data) {
+                                if (data == "success") {
+                                    HdUtil.messager.slide(HdUtil.constant.DELETE_SUCCESS);
+                                    $("#rolesTable").datagrid("reload");
+                                } else {
+                                    HdUtil.messager.error(data);
+                                }
+                            }, error: function (data) {
+                                HdUtil.messager.error(data);
+                            }
+                        })
+                    }
+                });
+            } else {
+                HdUtil.messager.error("请选择要删除的记录");
+            }
+        }
+
+        function allAdd() {
+            var rightallrows = $("#rightSelect").datalist("getRows");
+            var leftallrows = $("#leftSelect").datalist("getRows");
+            //
+            rightallrows.push.apply(rightallrows, leftallrows);
+            leftallrows = [];
+            $("#leftSelect").datalist("loadData", leftallrows);
+            $("#rightSelect").datalist("loadData", rightallrows);
+        }
+
+        function addOne(index, row) {
+            var selectrows = [];
+            var selectIndex = 0;
+            var rightallrows = $("#rightSelect").datalist("getRows");
+            var leftallrows = $("#leftSelect").datalist("getRows");
+            //有传参，说明是双击
+            if (row) {
+                leftallrows.splice(index, 1);
+                rightallrows.push(row);
+            } else {
+                selectrows = $("#leftSelect").datalist("getSelections")
+                if (selectrows.length == 0) {
+                    HdUtil.messager.info("请选择添加的用户");
+                    return;
+                }
+                for (var i = 0; i < leftallrows.length; i++) {
+                    if (leftallrows[i].id == selectrows[0].id) {
+                        selectIndex = i;
+                    }
+                }
+                leftallrows.splice(selectIndex, 1);
+                rightallrows.push.apply(rightallrows, selectrows);
+            }
+            $("#leftSelect").datalist("loadData", leftallrows);
+            $("#rightSelect").datalist("loadData", rightallrows);
+        }
+
+        function removeOne(index, row) {
+            var selectrows = [];
+            var selectIndex = 0;
+            var rightallrows = $("#rightSelect").datalist("getRows");
+            var leftallrows = $("#leftSelect").datalist("getRows");
+            //有传参，说明是双击
+            if (row) {
+                if (currRoleCode == "ADMIN_ROLE" && row.id == "admin") {
+                    HdUtil.messager.info("不能移除admin管理员");
+                    return;
+                }
+                rightallrows.splice(index, 1);
+                leftallrows.push(row);
+            } else {
+                selectrows = $("#rightSelect").datalist("getSelections")
+                if (selectrows.length == 0) {
+                    HdUtil.messager.info("请选择删除的用户");
+                    return;
+                }
+                for (var i = 0; i < rightallrows.length; i++) {
+                    if (rightallrows[i].id == selectrows[0].id) {
+                        if (currRoleCode == "ADMIN_ROLE" && rightallrows[i].id == "admin") {
+                            HdUtil.messager.info("不能移除admin管理员");
+                            return;
+                        }
+                        selectIndex = i;
+                    }
+                }
+                rightallrows.splice(selectIndex, 1);
+                leftallrows.push.apply(leftallrows, selectrows);
+            }
+            $("#leftSelect").datalist("loadData", leftallrows);
+            $("#rightSelect").datalist("loadData", rightallrows);
+        }
+
+        function removeAll() {
+            var rightallrows = $("#rightSelect").datalist("getRows");
+            var leftallrows = $("#leftSelect").datalist("getRows");
+            var adminrow = [];
+            for (var i = 0; i < rightallrows.length; i++) {
+                leftallrows.push(rightallrows[i]);
+            }
+            $("#leftSelect").datalist("loadData", leftallrows);
+            $("#rightSelect").datalist("loadData", adminrow);
+        }
+
+        //保存人员权限
+        function saveManageUser() {
+            var userId = "";
+            var rightallrows = $("#rightSelect").datalist("getRows");
+            $.each(rightallrows, function (index, value) {
+                userId += value.userId + ","
+            });
+            // console.log("userId:"+userId+"wholeRoleId:"+wholeRoleId+"oldUserKeys:"+oldUserKeys)
+            $.ajax({
+                type: "POST",
+                url: "/SysUserRole/updateRoleUsers",
+                data: {
+                    roleId: wholeRoleId,
+                    userId: userId,
+                    oldUserId: oldUserKeys
+                },
+                dataType: "text",
+                success: function (callbackValue) {
+                    if (callbackValue == "success") {
+                        HdUtil.messager.slide(HdUtil.constant.SAVE_SUCCESS);
+                        $("userName").val("");
+                        $("#manageDialog").dialog("close");
+                    }
+                },
+                error: function (data) {
+                    HdUtil.messager.error(data);
+                }
+            });
+        }
+
+        //管理人员的查询界面
+        function searchItem() {
+            var userName = $("#userName").val();
+            $.ajax({
+                method: 'get',
+                url: "/SysRole/selectAllUser",
+                data: {
+                    userName: userName,
+                    roleId: wholeRoleId
+                },
+                success: function (data) {
+                    loadleftdata(data);
+                },
+                error: function (data) {
+                    HdUtil.messager.info(data);
+                }
+            });
+        }
+
+        function loadleftdata(data) {
+            var userListall = [];
+            $.each(data, function (i, v) {
+                userListall.push(v);
+            });
+            $("#leftSelect").datalist("loadData", userListall);
+        }
+
+        function loadrightdata(data) {
+            oldUserKeys = "";
+            var userListall = [];
+            $.each(data, function (i, v) {
+                oldUserKeys += v.userId + ","
+                userListall.push(v);
+            });
+            $("#rightSelect").datalist("loadData", userListall);
+        }
+    </script>
+    <style type="text/css">
+        textarea {
+            font-family: "Microsoft YaHei";
+        }
+
+        .panel-body{
+            padding: 0px;
+        }
+    </style>
+
+</head>
+<body>
+<div id="rolesTableToolBar" style="height: 40px;">
+    <form id="searchForm" style="align-items: center; margin-top:2px;">
+        <span>角色名称:</span>
+        <input name="roleName" id="roleName" data-options="prompt:'请输入角色名称'" class="easyui-textbox"/>&nbsp;
+        <a class="easyui-linkbutton" iconCls="icon-search" onclick="searchRoles()">查询</a>
+        <a class="easyui-linkbutton" iconCls="icon-add" onclick="add()">增加</a>
+        <a class="easyui-linkbutton" iconCls="icon-edit" onclick="edit()">修改</a>
+        <a class="easyui-linkbutton" iconCls="icon-remove" onclick="deleteRole()">删除</a>
+    </form>
+</div>
+<table id="rolesTable" data-options="fit:true,border:false"></table>
+<div id="rolesDialog" buttons="#user-dlg-buttons2">
+    <form id="rolesForm" method="post">
+        <table align="center">
+            <br/>
+            <tr>
+                <td align="right" style="font-size: 12px;text-align:justify;">角色名称：</td>
+                <td>
+                    <input name="roleId" type="hidden">
+                    <input name="roleName" class="easyui-textbox" data-options="required:true"/>
+                </td>
+            </tr>
+            <!--<tr>-->
+                <!--<td align="right" style="font-size: 12px;text-align:justify;">角色属性：</td>-->
+                <!--<td>-->
+                    <!--<select name="isAdmin" class="easyui-combobox" data-options="required:true"-->
+                            <!--style="width:150px">-->
+                        <!--<option value="1">管理员</option>-->
+                        <!--<option value="0">非管理员</option>-->
+                    <!--</select>-->
+                <!--</td>-->
+            <!--</tr>-->
+            <tr>
+                <td align="right" style="font-size: 12px;text-align:center;text-align:justify;text-align-last:justify">
+                    描述：
+                </td>
+                <td>
+                    <input name="remark" class="easyui-textbox" data-options="multiline:true"
+                           style="height:60px;"/>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+<div id="powerDiaglog" class="easyui-dialog" style="width:300px;height:452px;padding:0px 0px"
+     buttons="#password-dlg-buttons" title="功能分配" data-options="cache:false,modal: true,closed:true">
+    <iframe frameborder="0" style="width:100%;height:100%;" id="frame" ></iframe>
+</div>
+<div id="password-dlg-buttons">
+    <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="javascript:savePower();return false;">保存</a>
+    <a href="#" class="easyui-linkbutton" iconCls="icon-cancel"
+       onclick="javascript:$('#powerDiaglog').dialog('close');return false;">关闭</a>
+</div>
+<div id="manageDialog" class="easyui-dialog" buttons="#user-dlg-buttons">
+    <div style="height:30px;">
+        <form id="manageForm" style="align-items: center; margin-top:4px;margin-left: 20px;">
+            <span>用户名称:</span>
+            <input type="easyui-textbox" id="userName" data-options="prompt:'请输入用户名称'" class="easyui-textbox"
+                   style="width:140px;"/>
+            <a class="easyui-linkbutton" iconCls="icon-search" onclick="searchItem()">查询</a>
+        </form>
+    </div>
+    <div>
+        <table style="margin-left: 20px;border-width: 0px">
+            <tr>
+                <td>
+                    <div id="leftSelect" name="leftSelect"
+                         style="width: 260px;height: 320px;font-family: 'Microsoft YaHei'; ">
+                    </div>
+                </td>
+                <td style="text-align: center">
+                    <table>
+                        <tr style="height:40px;">
+                            <td>
+                                <a id="toRightAll" class="easyui-linkbutton" onclick="allAdd()"
+                                   style="width:60px;">全部添加</a>
+                            </td>
+                        </tr>
+                        <tr style="height:40px;">
+                            <td>
+                                <a id="toRight" class="easyui-linkbutton" onclick="addOne()" style="width:58px;">添&nbsp;&nbsp;&nbsp;&nbsp;加</a>
+                            </td>
+                        </tr>
+                        <tr style="height:40px;">
+                            <td>
+                                <a id="toLeft" class="easyui-linkbutton" onclick="removeOne()"
+                                   style="width:58px;">移&nbsp;&nbsp;&nbsp;&nbsp;除</a>
+                            </td>
+                        </tr>
+                        <tr style="height:40px;">
+                            <td>
+                                <a id="toLeftAll" class="easyui-linkbutton" onclick="removeAll()" style="width:60px;">全部移除</a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td>
+                    <div id="rightSelect" name="rightSelect"
+                         style="width: 260px;height: 320px;font-family: 'Microsoft YaHei'; ">
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div id="user-dlg-buttons">
+    <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="javascript:saveManageUser();return false;">保存</a>
+    <a href="#" class="easyui-linkbutton" iconCls="icon-cancel"
+       onclick="javascript:$('userName').val('');$('#manageDialog').dialog('close');return false;">关闭</a>
+</div>
+<div id="user-dlg-buttons2">
+    <a href="#" class="easyui-linkbutton" iconCls="icon-ok" onclick="javascript:saveRole();return false;">保存</a>
+    <a href="#" class="easyui-linkbutton" iconCls="icon-cancel"
+       onclick="javascript:$('#rolesDialog').dialog('close');return false;">关闭</a>
+</div>
+</body>
+</html>

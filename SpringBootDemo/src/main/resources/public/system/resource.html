@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <meta charset="UTF-8">
+    <title>菜单管理</title>
+    <link href="/js/jquery-easyui-1.5.1/themes/default/easyui.css" rel="stylesheet" type="text/css"/>
+    <link href="/js/jquery-easyui-1.5.1/themes/icon.css" rel="stylesheet" type="text/css">
+    <link href="/js/jquery-easyui-1.5.1/themes/icon-standard.css" rel="stylesheet" type="text/css">
+    <link href="/js/jquery-easyui-1.5.1/themes/icon-hamburg.css" rel="stylesheet" type="text/css">
+    <link href="/css/head.css" rel="stylesheet" type="text/css">
+    <link href="/css/index.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="/h-ui/css/H-ui.min.css" />
+    <link rel="stylesheet" type="text/css" href="/h-ui.admin/css/H-ui.admin.css" />
+    <link rel="stylesheet" type="text/css" href="/lib/Hui-iconfont/1.0.8/iconfont.css" />
+    <link rel="stylesheet" type="text/css" href="/h-ui.admin/skin/green/skin.css" id="skin" />
+    <link rel="stylesheet" type="text/css" href="/h-ui.admin/css/style.css" />
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/HdUtil.js"></script>
+    <script src="/js/jquery-easyui-1.5.1/jquery.easyui.min.js"></script>
+    <script src="/js/jquery-easyui-1.5.1/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            //初始化菜单树
+            $("#menuTree").tree({
+                method: "get",
+                url: "/SysResource/getAllMenu",
+                onClick: function (node) {
+                    $("#menuForm").form("load", node);
+                    if (node.disabled == "1") {
+                        $("#disabled").prop("checked", true);
+                    } else {
+                        $("#disabled").prop("checked", false);
+                    }
+
+                }
+            });
+        });
+        //添加同级节点
+        function addTreeNode() {
+            var node = $("#menuTree").tree("getSelected");
+            if (node) {
+                $("#menuForm").form("clear");
+                $("#parentId").val(node.parentId);
+            } else {
+                HdUtil.messager.error("请选择节点");
+            }
+        }
+        //添加子节点
+        function addLeafNode() {
+            var node = $("#menuTree").tree("getSelected");
+            if (node) {
+                $("#menuForm").form("clear");
+                $("#parentId").val(node.id);
+            } else {
+                HdUtil.messager.error("请选择节点");
+            }
+        }
+        //删除节点
+        function deleteNode() {
+            var node = $("#menuTree").tree("getSelected");
+            if (node) {
+                $.messager.confirm(HdUtil.constant.CONFIRM, HdUtil.constant.DELETE_CONFIRM, function (r) {
+                    if (r) {
+                        $.ajax({
+                            type: "POST",
+                            contentType:"application/x-www-form-urlencoded",
+                            url: "/SysResource/delete",
+                            data: {
+                                resourceId:node.id
+                            },
+                            success: function (data) {
+                                if (data == "success") {
+                                    HdUtil.messager.slide(HdUtil.constant.DELETE_SUCCESS);
+                                    $("#menuForm").form("clear");
+                                    $("#menuTree").tree("reload");
+                                    $("#permissionTable").datagrid("reload");
+                                } else {
+                                    HdUtil.messager.error(data);
+                                }
+                            }
+                        })
+                    }
+                });
+            } else {
+                HdUtil.messager.error("请选择要删除的菜单");
+            }
+        }
+        //保存树属性
+        function saveResource() {
+            $("#menuForm").form("submit", {
+                url: "/SysResource/save",
+                onSumbit: function () {
+                    $("#menuForm").form.validate();
+                },
+                success: function (data) {
+                    if ("success" == data) {
+                        HdUtil.messager.slide(HdUtil.constant.SAVE_SUCCESS);
+                        var selectTreeId = $("#menuTree").tree("getSelected").id;
+                        $("#menuTree").tree("reload");
+                        $("#menuTree").tree({
+                            onLoadSuccess: function () {
+                                var node = $('#menuTree').tree('find', selectTreeId);
+                                $("#menuTree").tree("select", node.target);
+                            }
+                        });
+                    } else {
+                        HdUtil.messager.error(data);
+                    }
+                }
+            });
+        }
+    </script>
+    <style type="text/css">
+        textarea {
+            font-family: "Microsoft YaHei";
+        }
+
+        .panel-body{
+            padding: 4px;
+        }
+    </style>
+</head>
+<body >
+<nav class="breadcrumb"><i class="Hui-iconfont">&#xe67f;</i> 首页 <span class="c-gray en">&gt;</span> 管理员管理 <span class="c-gray en">&gt;</span> 菜单管理</nav>
+<div class="easyui-layout " fit="true">
+    <div data-options="region:'west',split:true" style="width: 600px">
+        <div>
+            <a class="easyui-linkbutton" iconCls="icon-add" plain="false" onclick="addTreeNode()">添加同级节点</a>
+            <a class="easyui-linkbutton" iconCls="icon-add" plain="false" onclick="addLeafNode()">添加子节点</a>
+            <a class="easyui-linkbutton" iconCls="icon-remove" plain="false" onclick="deleteNode()">删除</a>
+        </div>
+        <ul id="menuTree"></ul>
+    </div>
+    <div data-options="region:'center',split:true">
+        <form id="menuForm">
+            <table>
+                <tr>
+                    <td>菜单名：</td>
+                    <td>
+                        <input type="hidden" id="id" name="id"/>
+                        <input type="hidden" id="parentId" name="parentId"/>
+                        <input class="easyui-textbox" id="menuName" name="menuName" data-options="required:true"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>路径：</td>
+                    <td>
+                        <input class="easyui-textbox" id="url" name="url"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>排序：</td>
+                    <td>
+                        <input class="easyui-numberbox" id="seqNum" name="seqNum"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>图标：</td>
+                    <td>
+                        <input class="easyui-textbox" id="icon" name="icon"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>禁用：</td>
+                    <td>
+                        <input id="disabled" name="disabled" type="checkbox"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>描述：</td>
+                    <td>
+                        <input class="easyui-textbox" id="remark" name="remark"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td  align="left">
+                        <a class="easyui-linkbutton" iconCls="icon-save" plain="false" onclick="saveResource()">保存</a>
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+    </div>
+</div>
+
+</body>
+</html>
